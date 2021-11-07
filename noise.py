@@ -2,6 +2,21 @@
 import numpy as np
 import os
 import cv2
+import findpeaks
+
+# filters parameters
+# window size
+winsize = 15
+# damping factor for frost
+k_value1 = 2.0
+# damping factor for lee enhanced
+k_value2 = 1.0
+# coefficient of variation of noise
+cu_value = 0.25
+# coefficient of variationfor lee enhanced of noise
+cu_lee_enhanced = 0.523
+# max coefficient of variation for lee enhanced 
+cmax_value = 1.73
 
 
 NOISE_TYPE_GAUSS = 'gauss'
@@ -11,6 +26,17 @@ NOISE_TYPE_SPECKLE = 'speckle'
 
 '''None Local Means denosify algorithm'''
 DENOISE_TYPE_NLM = 'nlm'
+DENOISE_TYPE_NONE = None
+DENOISE_TYPE_LEE = 'lee'
+DENOISE_TYPE_LEE_ENHANCED = 'lee_enhanced'
+DENOISE_TYPE_KUAN = 'kuan'
+DENOISE_TYPE_FASTNL = 'fastnl'
+DENOISE_TYPE_BILATERAL = 'bilateral'
+DENOISE_TYPE_FROST = 'frost'
+DENOISE_TYPE_MEDIAN = 'median'
+DENOISE_TYPE_MEAN = 'mean'
+
+DENOISE_FILTERS = [None, 'lee', 'lee_enhanced', 'kuan', 'fastnl', 'bilateral', 'frost', 'median', 'mean']
 
 def noisify(noise_type, image):
     """
@@ -71,12 +97,31 @@ def noisify(noise_type, image):
 
 
 
+
+
 def denosify(denoise_type, img):
+    img = (img * 255).astype(np.uint8) ## avoid unsupported cv2 type exception
+    denoise = None
     if denoise_type == DENOISE_TYPE_NLM:
-        denoisy = None
-        img = (img * 255).astype(np.uint8) ## avoid unsupported cv2 type exception
         if len(img.shape) == 2:
-            denoisy = cv2.fastNlMeansDenoising(img,None,10,7,21)
+            denoise = cv2.fastNlMeansDenoising(img,None,10,7,21)
         elif len(img.shape) == 3:
-            denoisy = cv2.fastNlMeansDenoisingColored(img,None,10,10,7,21)
-        return denoisy
+            denoise = cv2.fastNlMeansDenoisingColored(img,None,10,10,7,21)
+    if denoise_type == DENOISE_TYPE_FASTNL:
+        denoise = findpeaks.stats.denoise(img, method = DENOISE_TYPE_FASTNL, window = winsize)
+    if denoise_type == DENOISE_TYPE_BILATERAL:
+        denoise = findpeaks.stats.denoise(img, method = DENOISE_TYPE_BILATERAL, window = winsize)
+    if denoise_type == DENOISE_TYPE_FROST:
+        denoise = findpeaks.frost_filter(img, damping_factor = k_value1, win_size = winsize)
+    if denoise_type == DENOISE_TYPE_KUAN:
+        denoise = findpeaks.kuan_filter(img, win_size = winsize, cu = cu_value)
+    if denoise_type == DENOISE_TYPE_LEE:
+        denoise = findpeaks.lee_filter(img, win_size = winsize, cu = cu_value)
+    if denoise_type == DENOISE_TYPE_LEE_ENHANCED:
+        denoise = findpeaks.lee_enhanced_filter(img, win_size = winsize, k = k_value2, cu = cu_lee_enhanced, cmax = cmax_value)
+    if denoise_type == DENOISE_TYPE_MEAN:
+        denoise = findpeaks.mean_filter(img, win_size = winsize)
+    if denoise_type == DENOISE_TYPE_MEDIAN:
+        denoise = findpeaks.median_filter(img, win_size = winsize) 
+    return denoise   
+    
