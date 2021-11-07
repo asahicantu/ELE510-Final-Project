@@ -9,6 +9,9 @@ NOISE_TYPE_SALT_PEPPER = 's&p'
 NOISE_TYPE_POISSON = 'poisson'
 NOISE_TYPE_SPECKLE = 'speckle'
 
+'''None Local Means denosify algorithm'''
+DENOISE_TYPE_NLM = 'nlm'
+
 def noisify(noise_type, image):
     """
     Parameters
@@ -59,9 +62,21 @@ def noisify(noise_type, image):
             row,col = image.shape #row,col & channel if more than 1 color channel present
             gauss = np.random.randn(row,col)
             gauss = gauss.reshape(row,col)        
-        elif len(image.shape) == 2:
+        elif len(image.shape) == 3:
             row,col,ch = image.shape #row,col & channel if more than 1 color channel present
             gauss = np.random.randn(row,col,ch)
             gauss = gauss.reshape(row,col,ch)        
         noisy = image + image * gauss
         return noisy
+
+
+
+def denosify(denoise_type, img):
+    if denoise_type == DENOISE_TYPE_NLM:
+        denoisy = None
+        img = (img * 255).astype(np.uint8) ## avoid unsupported cv2 type exception
+        if len(img.shape) == 2:
+            denoisy = cv2.fastNlMeansDenoising(img,None,10,7,21)
+        elif len(img.shape) == 3:
+            denoisy = cv2.fastNlMeansDenoisingColored(img,None,10,10,7,21)
+        return denoisy
