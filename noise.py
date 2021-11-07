@@ -123,5 +123,4 @@ def denosify(denoise_type, img):
         denoise = findpeaks.mean_filter(img, win_size = winsize)
     if denoise_type == DENOISE_TYPE_MEDIAN:
         denoise = findpeaks.median_filter(img, win_size = winsize) 
-    return denoise   
-    
+    return denoise
