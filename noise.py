@@ -137,10 +137,15 @@ def denosify(denoise_type, img):
         # Estimate the average noise standard deviation across color channels.
         # Due to clipping in random_noise, the estimate will be a bit smaller than the
         # specified sigma.
-        sigma_est = estimate_sigma(img, channel_axis=-1, average_sigmas=True)
-        denoise = denoise_wavelet(img, channel_axis=-1, convert2ycbcr=True,
-                           method='BayesShrink', mode='soft',
-                           rescale_sigma=True)
+        sigma_est = estimate_sigma(img,
+                                   multichannel = False,
+                                   average_sigmas=True)
+        denoise = denoise_wavelet(img, 
+                                multichannel = False,
+                                convert2ycbcr=False,
+                                method='BayesShrink', 
+                                mode='soft',
+                                rescale_sigma=True)
 
         
     if denoise_type == DENOISE_TYPE_WAVELET_VISUSHRINK:
@@ -148,8 +153,10 @@ def denosify(denoise_type, img):
         # results in a visually over-smooth appearance.  Repeat, specifying a reduction
         # in the threshold by factors of 2 and 4.
         wavelet_factor = 1
-        sigma_est = estimate_sigma(img, channel_axis=-1, average_sigmas=True)
-        denoise = denoise_wavelet(img, channel_axis=-1, convert2ycbcr=True,
-                                        method='VisuShrink', mode='soft',
-                                        sigma=sigma_est/wavelet_factor, rescale_sigma=True)
+        sigma_est = estimate_sigma(img, average_sigmas=True)
+        denoise = denoise_wavelet(img, 
+                                  method='VisuShrink',
+                                  mode='soft',
+                                  sigma=sigma_est/wavelet_factor, 
+                                  rescale_sigma=True)
     return denoise
