@@ -4,6 +4,12 @@ import os
 import cv2
 import findpeaks
 
+from skimage.restoration import (denoise_wavelet, estimate_sigma)
+from skimage import data, img_as_float
+from skimage.util import random_noise
+from skimage.metrics import peak_signal_noise_ratio
+
+
 # filters parameters
 # window size
 winsize = 15
@@ -35,6 +41,8 @@ DENOISE_TYPE_BILATERAL = 'bilateral'
 DENOISE_TYPE_FROST = 'frost'
 DENOISE_TYPE_MEDIAN = 'median'
 DENOISE_TYPE_MEAN = 'mean'
+DENOISE_TYPE_WAVELET_BAYES = 'wave_bayes'
+DENOISE_TYPE_WAVELET_VISUSHRINK = 'wave_visushrink'
 
 DENOISE_FILTERS = [None, 'lee', 'lee_enhanced', 'kuan', 'fastnl', 'bilateral', 'frost', 'median', 'mean']
 
@@ -123,4 +131,25 @@ def denosify(denoise_type, img):
         denoise = findpeaks.mean_filter(img, win_size = winsize)
     if denoise_type == DENOISE_TYPE_MEDIAN:
         denoise = findpeaks.median_filter(img, win_size = winsize) 
+    ##  Part of this code was taken from
+    # https://scikit-image.org/docs/dev/auto_examples/filters/plot_denoise_wavelet.html
+    if denoise_type == DENOISE_TYPE_WAVELET_BAYES:
+        # Estimate the average noise standard deviation across color channels.
+        # Due to clipping in random_noise, the estimate will be a bit smaller than the
+        # specified sigma.
+        sigma_est = estimate_sigma(img, channel_axis=-1, average_sigmas=True)
+        denoise = denoise_wavelet(img, channel_axis=-1, convert2ycbcr=True,
+                           method='BayesShrink', mode='soft',
+                           rescale_sigma=True)
+
+        
+    if denoise_type == DENOISE_TYPE_WAVELET_VISUSHRINK:
+        # VisuShrink is designed to eliminate noise with high probability, but this
+        # results in a visually over-smooth appearance.  Repeat, specifying a reduction
+        # in the threshold by factors of 2 and 4.
+        wavelet_factor = 1
+        sigma_est = estimate_sigma(img, channel_axis=-1, average_sigmas=True)
+        denoise = denoise_wavelet(img, channel_axis=-1, convert2ycbcr=True,
+                                        method='VisuShrink', mode='soft',
+                                        sigma=sigma_est/wavelet_factor, rescale_sigma=True)
     return denoise
