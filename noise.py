@@ -82,3 +82,8 @@ def denosify(denoise_type, img, params = tuple()):
         window = params
         denoise = findpeaks.median_filter(img, win_size = window) 
     return denoise
+
+
+def get_histogram(img, idx):
+    histr = cv2.calcHist([img],[idx],None,[256],[0,256])
+    return histr
