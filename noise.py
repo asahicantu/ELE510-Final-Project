@@ -11,16 +11,16 @@ def noisify_speckle(image):
     gauss = None
     if len(image.shape) == 2:
         row, col = image.shape
-        mu, sigma = 0, 0.7
-        # gauss = np.random.normal(mu, sigma, row * col).astype('uint8')
+#         mu, sigma = 0, 0.5
+#         gauss = np.random.normal(mu, sigma, row * col).astype('uint8')
         gauss = np.random.randn(row, col).astype('uint8')
         gauss = gauss.reshape(row, col)
     elif len(image.shape) == 3:
         row, col, ch = image.shape
-        # gauss = np.random.randn(mu, sigma, row * col * ch)
+#         gauss = np.random.randn(mu, sigma, row * col * ch).astype('uint8')
         gauss = np.random.randn(row, col, ch).astype('uint8')
         gauss = gauss.reshape(row, col, ch) 
-    noisy = image + image ** gauss
+    noisy = (image + image * gauss).astype('uint8')
     return noisy
 
 def non_local_means(image, big_window, small_window):
